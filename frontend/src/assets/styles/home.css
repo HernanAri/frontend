@@ -1,0 +1,506 @@
+/* Contenedor principal con fondo animado */
+.bg_animated {
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(45deg, #1e3c72, #2a5298, #3d7eaa, #50a5bb);
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Animación del fondo gradient */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Contenedor de la explosión */
+.explosion_container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 50px;
+}
+
+/* Contenedor de la imagen principal */
+.explosion_image {
+  position: relative;
+  animation: bubbleRise 4s ease-out forwards;
+  z-index: 10;
+}
+
+/* Círculo principal que contiene el logo */
+.explosion_circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 0 20px rgba(255, 255, 255, 0.3),
+    0 0 40px rgba(255, 255, 255, 0.2),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  animation: 
+    bubbleFloat 2s ease-in-out infinite,
+    bubbleGlow 1.5s ease-in-out infinite alternate,
+    bubbleExplodeTop 4s ease-out forwards;
+}
+
+/* Estilo del logo */
+.explosion_circle img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  z-index: 2;
+  position: relative;
+}
+
+/* Burbujas adicionales */
+.explosion_container::before,
+.explosion_container::after {
+  content: '';
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 
+    0 0 15px rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(255, 255, 255, 0.1);
+}
+
+.explosion_container::before {
+  left: 20%;
+  bottom: 30px;
+  animation: 
+    bubbleRiseLeft 3.5s ease-out forwards,
+    bubbleFloatSmall 2s ease-in-out infinite,
+    bubbleExplodeTopSmall 3.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+.explosion_container::after {
+  right: 20%;
+  bottom: 30px;
+  animation: 
+    bubbleRiseRight 4.5s ease-out forwards,
+    bubbleFloatSmall 2s ease-in-out infinite,
+    bubbleExplodeTopSmall 4.5s ease-out forwards;
+  animation-delay: 1s;
+}
+
+/* Burbujas adicionales con JavaScript-like effect usando múltiples elementos */
+.explosion_image::before,
+.explosion_image::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 0 10px rgba(255, 255, 255, 0.15),
+    0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.explosion_image::before {
+  width: 40px;
+  height: 40px;
+  left: -80px;
+  top: 20px;
+  animation: 
+    bubbleRiseSmall1 3s ease-out forwards,
+    bubbleFloatTiny 1.5s ease-in-out infinite,
+    bubbleExplodeTopTiny 3s ease-out forwards;
+  animation-delay: 1.5s;
+}
+
+.explosion_image::after {
+  width: 35px;
+  height: 35px;
+  right: -70px;
+  top: 30px;
+  animation: 
+    bubbleRiseSmall2 3.8s ease-out forwards,
+    bubbleFloatTiny 1.5s ease-in-out infinite,
+    bubbleExplodeTopTiny 3.8s ease-out forwards;
+  animation-delay: 2s;
+}
+
+/* Animación de subida de la burbuja principal */
+@keyframes bubbleRise {
+  0% {
+    transform: translateY(50vh) scale(0.5);
+    opacity: 0.7;
+  }
+  40% {
+    transform: translateY(10vh) scale(0.8);
+    opacity: 0.9;
+  }
+  70% {
+    transform: translateY(-20vh) scale(1);
+    opacity: 1;
+  }
+  85% {
+    transform: translateY(-35vh) scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40vh) scale(1.1);
+    opacity: 1;
+  }
+}
+
+/* Animaciones de subida para burbujas laterales */
+@keyframes bubbleRiseLeft {
+  0% {
+    transform: translateY(50vh) translateX(-20px) scale(0.4);
+    opacity: 0.6;
+  }
+  60% {
+    transform: translateY(-10vh) translateX(-10px) scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-45vh) translateX(0px) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bubbleRiseRight {
+  0% {
+    transform: translateY(50vh) translateX(20px) scale(0.4);
+    opacity: 0.6;
+  }
+  60% {
+    transform: translateY(-15vh) translateX(10px) scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-42vh) translateX(0px) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Animaciones de subida para burbujas pequeñas */
+@keyframes bubbleRiseSmall1 {
+  0% {
+    transform: translateY(30vh) translateX(-10px) scale(0.3);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-45vh) translateX(10px) scale(1);
+    opacity: 0.8;
+  }
+}
+
+@keyframes bubbleRiseSmall2 {
+  0% {
+    transform: translateY(25vh) translateX(15px) scale(0.3);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-48vh) translateX(-5px) scale(1);
+    opacity: 0.8;
+  }
+}
+
+/* Animaciones de flotación */
+@keyframes bubbleFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+@keyframes bubbleFloatSmall {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+@keyframes bubbleFloatTiny {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-5px) rotate(1deg);
+  }
+}
+
+/* Animación de brillo */
+@keyframes bubbleGlow {
+  0% {
+    box-shadow: 
+      0 0 20px rgba(255, 255, 255, 0.3),
+      0 0 40px rgba(255, 255, 255, 0.2),
+      inset 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+  100% {
+    box-shadow: 
+      0 0 30px rgba(255, 255, 255, 0.5),
+      0 0 60px rgba(255, 255, 255, 0.3),
+      inset 0 0 30px rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* Animación de explosión en la parte superior - Burbuja principal */
+@keyframes bubbleExplodeTop {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  90% {
+    transform: scale(1.3);
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.2);
+  }
+  95% {
+    transform: scale(1.8);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+    background: rgba(255, 255, 255, 0);
+    border: 3px solid rgba(255, 255, 255, 0);
+  }
+}
+
+/* Animación de explosión para burbujas medianas */
+@keyframes bubbleExplodeTopSmall {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  85% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  95% {
+    transform: scale(1.8);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+    background: rgba(255, 255, 255, 0);
+    border: 2px solid rgba(255, 255, 255, 0);
+  }
+}
+
+/* Animación de explosión para burbujas pequeñas */
+@keyframes bubbleExplodeTopTiny {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  90% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+    background: rgba(255, 255, 255, 0);
+    border: 1px solid rgba(255, 255, 255, 0);
+  }
+}
+
+/* Efectos de partículas mejorados */
+.explosion_circle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: particle1 2s ease-out forwards;
+  animation-delay: 3.2s;
+  opacity: 0;
+}
+
+.explosion_circle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.7) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: particle2 2s ease-out forwards;
+  animation-delay: 3.2s;
+  opacity: 0;
+}
+
+/* Animaciones de partículas mejoradas */
+@keyframes particle1 {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-60px, -100px) scale(1.2);
+    opacity: 0.9;
+  }
+  70% {
+    transform: translate(-100px, -160px) scale(0.8);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(-140px, -220px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes particle2 {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(50px, -110px) scale(1.2);
+    opacity: 0.9;
+  }
+  70% {
+    transform: translate(90px, -180px) scale(0.8);
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate(130px, -240px) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Animación de ondas de choque */
+.explosion_container {
+  position: relative;
+}
+
+.explosion_container::before {
+  animation-name: 
+    bubbleRiseLeft,
+    bubbleFloatSmall,
+    bubbleExplodeTopSmall,
+    shockwave1;
+  animation-delay: 0.5s, 0.5s, 0.5s, 3.8s;
+}
+
+.explosion_container::after {
+  animation-name: 
+    bubbleRiseRight,
+    bubbleFloatSmall,
+    bubbleExplodeTopSmall,
+    shockwave2;
+  animation-delay: 1s, 1s, 1s, 4.2s;
+}
+
+@keyframes shockwave1 {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0 60px rgba(255, 255, 255, 0);
+  }
+}
+
+@keyframes shockwave2 {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 50px rgba(255, 255, 255, 0);
+  }
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+  .explosion_circle {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .explosion_circle img {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .explosion_container::before,
+  .explosion_container::after {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .explosion_image::before {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .explosion_image::after {
+    width: 25px;
+    height: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .explosion_circle {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .explosion_circle img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .explosion_container::before,
+  .explosion_container::after {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .explosion_image::before {
+    width: 25px;
+    height: 25px;
+  }
+  
+  .explosion_image::after {
+    width: 20px;
+    height: 20px;
+  }
+}

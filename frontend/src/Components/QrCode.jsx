@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import '../assets/styles/QrCode.css';
+import axios from 'axios'
 
 const QrCode = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState(null);
   const scannerRef = useRef(null);
+  const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
     return () => {
@@ -32,12 +34,25 @@ const QrCode = () => {
     scannerRef.current = new Html5QrcodeScanner('qr-reader', config, false);
 
     scannerRef.current.render(
-      (decodedText) => {
+      async (decodedText) => {
         setScanResult(decodedText);
         stopScanner();
+
+        try {
+          const res = await axios.get(`http://localhost:3000/usuario/${decodedText}`);
+          setUsuario(res.data); // Guarda los datos del usuario
+
+          await axios.post(`http://localhost:3000/registro/entrada/${decodedText}`)
+          localStorage.setItem("qrEmpleadoId",decodedText)
+
+        } catch (err) {
+          console.error("Error al obtener datos del usuario:", err);
+          setError("Usuario no encontrado o error en el servidor.");
+        }
       },
       (err) => console.log('QR Scan Error:', err)
     );
+
   };
 
   const stopScanner = () => {
@@ -90,6 +105,19 @@ const QrCode = () => {
             <span>{error}</span>
           </div>
         )}
+
+        {usuario && (
+          <div className="qr-message info">
+            <i className="bi bi-person-fill"></i>
+            <div>
+              <strong>Usuario encontrado:</strong>
+              <p>Nombre: {usuario.nombre}</p>
+              <p>Email: {usuario.correo}</p>
+              <p>Documento: {usuario.documento}</p>
+            </div>
+          </div>
+        )}
+
 
         <div className="qr-actions">
           {!isScanning ? (

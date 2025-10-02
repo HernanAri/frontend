@@ -1,12 +1,14 @@
 import Navbar from "../Components/Navbar";
 import Footer from "../Components/Footer";
 import Card from "../Components/Cards";
+import Login_page from "../Components/Login_page";
+
 
 function Login() {
   return (
     <div>
         <Navbar />
-        <Card />
+        <Login_page />
         <Footer />
     </div>
   );

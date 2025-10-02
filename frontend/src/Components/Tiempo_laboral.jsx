@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, Calendar, Play, Pause, User, Users, TrendingUp, Award } from 'lucide-react';
 import '../assets/styles/Tiempo_laboral.css'; 
+import axios from 'axios';
 
 // Componente individual de empleado mejorado
 const EmployeeTimeCard = ({ 
@@ -173,63 +174,48 @@ const EmployeeTimeCard = ({
 // Componente principal del dashboard
 const ProfessionalTimeTracker = () => {
   // Estado inicial con datos de ejemplo
-  const [employees, setEmployees] = useState([
-    {
-      id: 'EMP001',
-      name: 'Ana García López',
-      department: 'Desarrollo',
-      photo: null,
-      isActive: true,
-      dailySeconds: 6 * 3600 + 45 * 60,
-      monthlySeconds: 85 * 3600,
-      sessionStart: new Date(Date.now() - 2 * 3600 * 1000),
-      efficiency: 98,
-      punctuality: 95,
-      weeklyDays: 5
-    },
-    {
-      id: 'EMP002',
-      name: 'Carlos Rodríguez',
-      department: 'Marketing',
-      photo: null,
-      isActive: false,
-      dailySeconds: 4 * 3600 + 30 * 60,
-      monthlySeconds: 72 * 3600,
-      sessionStart: null,
-      efficiency: 92,
-      punctuality: 88,
-      weeklyDays: 5
-    },
-    {
-      id: 'EMP003',
-      name: 'María Fernández',
-      department: 'Ventas',
-      photo: null,
-      isActive: true,
-      dailySeconds: 7 * 3600 + 15 * 60,
-      monthlySeconds: 95 * 3600,
-      sessionStart: new Date(Date.now() - 4 * 3600 * 1000),
-      efficiency: 96,
-      punctuality: 99,
-      weeklyDays: 5
-    },
-    {
-      id: 'EMP004',
-      name: 'José Martínez',
-      department: 'Administración',
-      photo: null,
-      isActive: false,
-      dailySeconds: 8 * 3600 + 10 * 60,
-      monthlySeconds: 120 * 3600,
-      sessionStart: null,
-      efficiency: 94,
-      punctuality: 92,
-      weeklyDays: 5
-    }
-  ]);
-
+  const [employees, setEmployees] = useState([]);
   const [filter, setFilter] = useState('all'); // all, active, inactive
   const [sortBy, setSortBy] = useState('name'); // name, daily, monthly, efficiency
+
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/usuarios");
+        const empleados = res.data.map(usuario => ({
+          id: usuario.idusuario,
+          name: usuario.nombre,
+          department: usuario.cargo || "Sin asignar",
+          email: usuario.correo,
+          document: usuario.documento,
+          role: usuario.rol,
+          photo: usuario.foto || null, // si lo agregas en el backend
+          isActive: usuario.estado === "activo",
+          dailySeconds: usuario.segundosHoy || 0,
+          monthlySeconds: usuario.segundosMes || 0,
+          sessionStart: usuario.inicioSesion ? new Date(usuario.inicioSesion) : null,
+          efficiency: usuario.eficiencia || 90,
+          punctuality: usuario.puntualidad || 90,
+          weeklyDays: usuario.diasSemana || 5
+        }));
+
+        setEmployees(empleados);
+      } catch (error) {
+        console.error("Error al cargar empleados:", error);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
+
+  useEffect(() => {
+    const idEscaneado = localStorage.getItem("qrEmpleadoId");
+    if (idEscaneado) {
+      handleToggleTime(idEscaneado); // activa el estado "Trabajando"
+      localStorage.removeItem("qrEmpleadoId");
+    }
+  }, [employees]);
+
 
   // Efecto para actualizar los timers en tiempo real
   useEffect(() => {
@@ -246,8 +232,35 @@ const ProfessionalTimeTracker = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleToggleTime = async (employeeId) => {
+  const empleadoActual = employees.find(e => e.id === employeeId);
+  const nuevoEstado = !empleadoActual?.isActive;
+
+  setEmployees(prev => 
+    prev.map(emp => 
+      emp.id === employeeId 
+        ? {
+            ...emp,
+            isActive: nuevoEstado,
+            sessionStart: nuevoEstado ? new Date() : null
+          }
+        : emp
+    )
+  );
+
+  try {
+    await axios.patch(`http://localhost:3000/usuarios/${employeeId}`, {
+      estado: nuevoEstado ? "activo" : "inactivo",
+      inicioSesion: nuevoEstado ? new Date().toISOString() : null
+    });
+  } catch (error) {
+    console.error("Error al actualizar estado del empleado:", error);
+  }
+};
+
+
   // Función para alternar el estado de tiempo de un empleado
-  const handleToggleTime = (employeeId) => {
+  /*const handleToggleTime = async (employeeId) => {
     setEmployees(prev => 
       prev.map(emp => 
         emp.id === employeeId 
@@ -259,7 +272,15 @@ const ProfessionalTimeTracker = () => {
           : emp
       )
     );
-  };
+    try {
+      await axios.patch(`http://localhost:3000/usuarios/${employeeId}`,{
+        estado: employees.find(e => e.id ===employeeId)?.isActive ? "inactivo" : "activo",
+        inicioSesion: new Date().toISOString()
+      });
+    }catch(error){
+      console.error("error al actualizar estado del empleado: ", error);
+    }
+  };*/
 
   // Función para ver detalles del empleado
   const handleViewDetails = (employeeId) => {

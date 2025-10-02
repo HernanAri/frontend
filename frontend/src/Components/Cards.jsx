@@ -14,7 +14,7 @@ export default function Cards() {
   return (
     <div className="login-card">
       <h2>Inicio de Sesión</h2>
-      <form onSubmit={handleSubmit} className="login-form">
+      <form onSubmit={handleSubmit} className="login-form" role="form">
         <label htmlFor="username">Usuario</label>
         <input
           type="text"

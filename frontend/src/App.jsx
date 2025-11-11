@@ -1,21 +1,40 @@
-import {BrowserRouter, Route, Routes} from 'react-router-dom';
-import Login from './pages/Login.jsx';
-import LectorQR from './pages/Lector_Qr.jsx';
-import Tiempo from './pages/Tiempo.jsx';
-import Home from './pages/home.jsx';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import Login from './pages/Login';
+import QRReader from './pages/QRReader';
+import Dashboard from './pages/Dashboard';
 
-
-
-function App() {  
+function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/Login" element={<Login />} />
-        <Route path="/lector" element={<LectorQR />} />
-        <Route path="/tiempo" element={<Tiempo />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          
+          <Route
+            path="/qr-reader"
+            element={
+              <ProtectedRoute>
+                <QRReader />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

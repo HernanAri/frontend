@@ -40,8 +40,59 @@ export const sessionAPI = {
 };
 
 export const userAPI = {
+  // Obtener todos los usuarios
   getAllUsers: async () => {
     const { data } = await axiosInstance.get('/usuario');
+    return data;
+  },
+  
+  // Obtener un usuario por ID
+  getUserById: async (idusuario) => {
+    const { data } = await axiosInstance.get(`/usuario/${idusuario}`);
+    return data;
+  },
+  
+  // Crear un nuevo usuario
+  createUser: async (userData) => {
+    const { data } = await axiosInstance.post('/usuario', {
+      idusuario: userData.idusuario || Date.now(), // Genera ID si no existe
+      nombre: userData.nombre,
+      documento: userData.documento,
+      cargo: userData.cargo || 'Empleado',
+      vehiculo: userData.vehiculo || 'Ninguno',
+      matricula: userData.matricula || 'N/A',
+      RH: userData.RH || 'O+',
+      correo: userData.correo,
+      direccion: userData.direccion || 'N/A',
+      celular: userData.celular,
+      elementos: userData.elementos || 'N/A',
+      rol: userData.rol || 'usuario',
+      username: userData.username,
+      password: userData.password,
+    });
+    return data;
+  },
+  
+  // Actualizar un usuario existente
+  updateUser: async (idusuario, userData) => {
+    const payload = {
+      rol: userData.rol,
+      username: userData.username,
+      email: userData.email || userData.correo,
+    };
+    
+    // Solo incluir password si se proporcionó
+    if (userData.password && userData.password.trim() !== '') {
+      payload.password = userData.password;
+    }
+    
+    const { data } = await axiosInstance.put(`/usuario/${idusuario}`, payload);
+    return data;
+  },
+  
+  // Eliminar un usuario
+  deleteUser: async (idusuario) => {
+    const { data } = await axiosInstance.delete(`/usuario/${idusuario}`);
     return data;
   },
 };

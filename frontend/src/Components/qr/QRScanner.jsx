@@ -61,29 +61,42 @@ const QRScanner = ({ onScan, isScanning }) => {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="w-full max-w-md mx-auto" style={{ backgroundColor: '#111827' }}>
+      <div 
+        className="rounded-lg shadow-lg p-6" 
+        style={{ backgroundColor: '#1F2937' }}
+      >
         <div className="flex items-center justify-center mb-4">
           {isScanning ? (
-            <Camera className="text-green-600" size={32} />
+            <Camera className="text-[#34D399]" size={32} />
           ) : (
-            <CameraOff className="text-gray-400" size={32} />
+            <CameraOff className="text-[#9CA3AF]" size={32} />
           )}
         </div>
         
         <div 
           id="qr-reader" 
           className="w-full"
-          style={{ border: '2px solid #4F46E5', borderRadius: '8px' }}
+          style={{ 
+            border: '2px solid #374151', 
+            borderRadius: '8px',
+            backgroundColor: '#1F2937'
+          }}
         ></div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded">
+          <div 
+            className="mt-4 p-3 rounded" 
+            style={{ backgroundColor: '#F87171', color: '#F9FAFB' }}
+          >
             {error}
           </div>
         )}
 
-        <p className="text-center text-gray-600 text-sm mt-4">
+        <p 
+          className="text-center text-sm mt-4" 
+          style={{ color: '#9CA3AF' }}
+        >
           {isScanning 
             ? 'Apunta la cámara al código QR' 
             : 'Presiona "Escanear" para iniciar'}

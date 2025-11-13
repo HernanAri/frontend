@@ -13,7 +13,7 @@ const QrCode = () => {
   useEffect(() => {
     return () => {
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
+        scannerRef.current.clear().catch(console.error);ll
       }
     };
   }, []);

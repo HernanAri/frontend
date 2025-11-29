@@ -1,6 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { LogOut, QrCode, LayoutDashboard, Clock, Users, Settings } from 'lucide-react';
+import { Car, List } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -45,11 +46,11 @@ const Navbar = () => {
             {(user?.rol === 'admin' || user?.rol === 'gerente') && (
               <>
                 <Link to="/dashboard" className={linkClass('/dashboard')}>
-                  <LayoutDashboard size={18} />
+                  <Car size={18} />
                   <span className="hidden md:inline">Dashboard</span>
                 </Link>
                 <Link to="/gestion" className={linkClass('/gestion')}>
-                  <Clock size={18} />
+                  <List size={18} />
                   <span className="hidden md:inline">Tiempos</span>
                 </Link>
               </>
@@ -60,6 +61,19 @@ const Navbar = () => {
                 <Settings size={18} />
                 <span className="hidden md:inline">Admin</span>
               </Link>
+            )}
+
+            {(user.rol === 'vigilante' || user.rol === 'admin') && (
+              <>
+                <Link to = "/registro-vehiculo" className={linkClass('/registro-vehiculo')}>
+                  <Clock size={18} />
+                  <span className="hidden md:inline">Registrar Vehículo</span>
+                </Link>
+                <Link to = "/lista-vehiculos" className={linkClass('/lista-vehiculos')}>
+                  <Clock size={18} />
+                  <span className="hidden md:inline">Lista de Vehículos</span>
+                </Link>
+              </>
             )}
           </div>
 

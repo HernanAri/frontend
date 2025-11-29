@@ -1,11 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import ProtectedRoute from './components/common/ProtectedRoute';
-import Login from './pages/Login';
-import QRReader from './pages/QRReader';
-import Dashboard from './pages/Dashboard';
+import ProtectedRoute from './Components/common/ProtectedRoute';
+import Login from './Pages/Login';
+import QRReader from './Pages/QRReader';
+import Dashboard from './Pages/Dashboard';
 import Admin from './Pages/admin';
 import Gestion from './Pages/Gestion';
+import EmployeeSession from './Pages/sesionEmpleados';
+import VehiculoRegistro from './Pages/RegistroVehiculo';
+import VehiculosLista from './Pages/ListaVehiculos';
 
 function App() {
   return (
@@ -58,6 +61,33 @@ function App() {
           {/* Redirecciones */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
+
+          <Route 
+            path="/sesion-empleados"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'gerente', 'empleado']}>
+                <EmployeeSession />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/registro-vehiculo"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'gerente', 'empleado']}>
+                <VehiculoRegistro />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/lista-vehiculos"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'gerente', 'empleado']}>
+                <VehiculosLista />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

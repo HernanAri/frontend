@@ -269,8 +269,8 @@ const Admin = () => {
               </div>
 
               {/* Formulario */}
-              <div className="space-y-4">
-                {Object.keys(formData).slice(0, 6).map((key) => (
+              <div className="flex-1 overflow-y-auto max-h-[60vh] pr-2 space-y-4">
+                {Object.keys(formData).map((key) => (
                   <div key={key}>
                     <label className="block text-sm font-medium text-gray-400 mb-2 capitalize">
                       {key}

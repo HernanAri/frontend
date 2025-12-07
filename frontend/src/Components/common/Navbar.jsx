@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { LogOut, QrCode, LayoutDashboard, Clock, Users, Settings } from 'lucide-react';
+import { LogOut, QrCode, Clock, Settings } from 'lucide-react';
 import { Car, List } from 'lucide-react';
 
 const Navbar = () => {
@@ -9,8 +9,16 @@ const Navbar = () => {
   const location = useLocation();
 
   const handleLogout = () => {
+    // Llamar al logout del contexto
     logout();
-    navigate('/login');
+    
+    // Navegar al login y reemplazar el historial
+    navigate('/login', { replace: true });
+    
+    // Recargar la página para limpiar completamente el estado
+    setTimeout(() => {
+      window.location.href = '/login';
+    }, 100);
   };
 
   const isActive = (path) => location.pathname === path;
@@ -29,7 +37,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-[#3B82F6] rounded-lg flex items-center justify-center">
-              <img src="logo3.png" alt="" />
+              <img src="logo3.png" alt="CLOKIFY" />
             </div>
             <div>
               <h1 className="text-xl font-script italic tracking-tight text-[#F9FAFB]">CLOKIFY</h1>
@@ -63,13 +71,13 @@ const Navbar = () => {
               </Link>
             )}
 
-            {(user.rol === 'vigilante' || user.rol === 'admin') && (
+            {(user?.rol === 'vigilante' || user?.rol === 'admin') && (
               <>
-                <Link to = "/registro-vehiculo" className={linkClass('/registro-vehiculo')}>
+                <Link to="/registro-vehiculo" className={linkClass('/registro-vehiculo')}>
                   <Clock size={18} />
                   <span className="hidden md:inline">Registrar Vehículo</span>
                 </Link>
-                <Link to = "/lista-vehiculos" className={linkClass('/lista-vehiculos')}>
+                <Link to="/lista-vehiculos" className={linkClass('/lista-vehiculos')}>
                   <Clock size={18} />
                   <span className="hidden md:inline">Lista de Vehículos</span>
                 </Link>

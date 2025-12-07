@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { LogIn, QrCode, User, AlertCircle, Camera, CameraOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { authAPI } from '../api/endpoints';
+import { useAuth } from '../hooks/useAuth';
+import axiosInstance from '../api/axios.config';
 
 const Login = () => {
   const [loginMode, setLoginMode] = useState('form');
@@ -12,9 +13,12 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [html5QrCode, setHtml5QrCode] = useState(null);
+  
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   useEffect(() => {
+    // Limpiar el escáner cuando el componente se desmonte
     return () => {
       stopQRScanner();
     };
@@ -30,34 +34,23 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/autenticador/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      if (!response.ok) throw new Error('Credenciales inválidas');
-
-      const data = await response.json();
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Usar el login del contexto de autenticación
+      const data = await login(username, password);
       
-      // Redirigir según el rol del usuario
+      // Redirigir según el rol del usuario usando window.location.href
       const rol = data.user.rol.toLowerCase();
       
       if (rol === 'admin') {
-        console.log('Redirigiendo a:', rol);
-        navigate('/admin');
+        window.location.href = '/admin';
       } else if (rol === 'gerente') {
-        navigate('/dashboard');
+        window.location.href = '/dashboard';
       } else if (rol === 'vigilante') {
-        navigate('/registro-vehiculo');
+        window.location.href = '/registro-vehiculo';
       } else {
-        navigate('/sesion-empleados');
+        window.location.href = '/sesion-empleados';
       }
     } catch (err) {
-      setError(err.message || 'Error al iniciar sesión');
-    } finally {
+      setError(err.response?.data?.message || 'Credenciales inválidas');
       setIsLoading(false);
     }
   };
@@ -105,23 +98,24 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3000/qrcode/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
+      // Limpiar cualquier sesión previa
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+      delete axiosInstance.defaults.headers.common['Authorization'];
 
-      if (!response.ok) throw new Error('QR inválido');
+      const response = await axiosInstance.post('/qrcode/login', { token });
 
-      const data = await response.json();
+      const data = response.data;
+
+      // Guardar tokens y usuario
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${data.access_token}`;
+
       // Los empleados que usan QR siempre van a su sesión personal
-       navigate('/sesion-empleados');
+      window.location.href = '/sesion-empleados';
     } catch (err) {
       setError('QR inválido o expirado');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -142,6 +136,7 @@ const Login = () => {
             onClick={() => {
               setLoginMode('form');
               stopQRScanner();
+              setError('');
             }}
             className={`flex-1 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
               loginMode === 'form'
@@ -153,7 +148,10 @@ const Login = () => {
             <span>Usuario</span>
           </button>
           <button
-            onClick={() => setLoginMode('qr')}
+            onClick={() => {
+              setLoginMode('qr');
+              setError('');
+            }}
             className={`flex-1 py-2 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
               loginMode === 'qr'
                 ? 'bg-[#3B82F6] text-white'
@@ -166,60 +164,62 @@ const Login = () => {
         </div>
 
         {loginMode === 'form' && (
-          <form>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-[#D1D5DB] mb-2">
-                Usuario
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleFormLogin();
-                  };
-                }}
-                className="w-full px-4 py-2 bg-[#111827] text-[#F9FAFB] border border-[#374151] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
-                placeholder="Ingresa tu usuario"
-              />
-            </div>
+          <form onSubmit={(e) => e.preventDefault()}>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-[#D1D5DB] mb-2">
+                  Usuario
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleFormLogin();
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 bg-[#111827] text-[#F9FAFB] border border-[#374151] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none disabled:opacity-50"
+                  placeholder="Ingresa tu usuario"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-[#D1D5DB] mb-2">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleFormLogin();
-                  };
-                }}
-                className="w-full px-4 py-2 bg-[#111827] text-[#F9FAFB] border border-[#374151] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none"
-                placeholder="Ingresa tu contraseña"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-[#D1D5DB] mb-2">
+                  Contraseña
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleFormLogin();
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="w-full px-4 py-2 bg-[#111827] text-[#F9FAFB] border border-[#374151] rounded-lg focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent outline-none disabled:opacity-50"
+                  placeholder="Ingresa tu contraseña"
+                />
+              </div>
 
-            <button
-              type="button"
-              onClick={handleFormLogin}
-              disabled={isLoading}
-              className={`w-full py-3 rounded-lg font-medium transition shadow-md ${
-                isLoading
-                  ? 'bg-[#374151] cursor-not-allowed text-[#9CA3AF]'
-                  : 'bg-[#3B82F6] hover:bg-[#2563EB] text-white'
-              }`}
-            >
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </button>
-          </div>
-        </form>
+              <button
+                type="button"
+                onClick={handleFormLogin}
+                disabled={isLoading}
+                className={`w-full py-3 rounded-lg font-medium transition shadow-md ${
+                  isLoading
+                    ? 'bg-[#374151] cursor-not-allowed text-[#9CA3AF]'
+                    : 'bg-[#3B82F6] hover:bg-[#2563EB] text-white'
+                }`}
+              >
+                {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              </button>
+            </div>
+          </form>
         )}
 
         {loginMode === 'qr' && (

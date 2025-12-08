@@ -19,9 +19,11 @@ const VehiculosLista = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const token = window.localStorage.getItem('token');
-      const headers = { 'Authorization': `Bearer ${token}` };
-
+      const token = window.localStorage.getItem('access_token');
+      const headers = {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    };
       const endpoint = filter === 'dentro' 
         ? 'http://localhost:3000/vehiculos/dentro'
         : 'http://localhost:3000/vehiculos/todos';
@@ -46,7 +48,7 @@ const VehiculosLista = () => {
     if (!window.confirm(`¿Registrar salida del vehículo ${matricula}?`)) return;
 
     try {
-      const token = window.localStorage.getItem('token');
+      const token = window.localStorage.getItem('access_token');
       const user = JSON.parse(window.localStorage.getItem('user'));
       
       const response = await fetch('http://localhost:3000/vehiculos/salida', {

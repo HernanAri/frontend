@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Play, Pause, StopCircle, LogOut, Calendar } from 'lucide-react';
+import { Clock, Play, Pause, StopCircle, LogOut, Calendar, CheckCircle } from 'lucide-react';
 
 const EmployeeSession = () => {
   const [user, setUser] = useState(null);
@@ -8,11 +8,20 @@ const EmployeeSession = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [pausedTime, setPausedTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [autoStartMessage, setAutoStartMessage] = useState(null);
 
   useEffect(() => {
     const userData = JSON.parse(window.localStorage.getItem('user') || '{}');
     setUser(userData);
-    loadActiveSession(userData.idusuario);
+    
+    // Intentar iniciar sesión automáticamente si no hay una activa
+    const autoStartSession = async () => {
+      if (userData.idusuario) {
+        await loadActiveSession(userData.idusuario, true);
+      }
+    };
+    
+    autoStartSession();
   }, []);
 
   useEffect(() => {
@@ -28,9 +37,9 @@ const EmployeeSession = () => {
     return () => clearInterval(interval);
   }, [session, isPaused, pausedTime]);
 
-  const loadActiveSession = async (userId) => {
+  const loadActiveSession = async (userId, autoStart = false) => {
     try {
-      const token = window.localStorage.getItem('token');
+      const token = window.localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/registro/usuario/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -40,11 +49,24 @@ const EmployeeSession = () => {
       if (response.ok) {
         const sessions = await response.json();
         const active = sessions.find(s => s.estado === 'activa');
+        
         if (active) {
+          // Ya hay sesión activa
           setSession(active);
           const start = new Date(active.inicio).getTime();
           const elapsed = Math.floor((Date.now() - start) / 1000);
           setCurrentTime(elapsed);
+          
+          if (autoStart) {
+            setAutoStartMessage({
+              type: 'info',
+              text: 'Tu sesión ya estaba activa. Continuando...'
+            });
+            setTimeout(() => setAutoStartMessage(null), 3000);
+          }
+        } else if (autoStart) {
+          // No hay sesión activa, iniciar automáticamente
+          await startSessionAuto(userId);
         }
       }
     } catch (err) {
@@ -52,10 +74,54 @@ const EmployeeSession = () => {
     }
   };
 
+  const startSessionAuto = async (userId) => {
+    try {
+      const token = window.localStorage.getItem('access_token');
+      const response = await fetch(`http://localhost:3000/registro/entrada/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.duplicado) {
+          // La sesión ya existía
+          setSession(data.sesion);
+          const start = new Date(data.sesion.inicio).getTime();
+          const elapsed = Math.floor((Date.now() - start) / 1000);
+          setCurrentTime(elapsed);
+        } else {
+          // Nueva sesión creada
+          setSession(data.sesion);
+          setCurrentTime(0);
+          setPausedTime(0);
+          setIsPaused(false);
+          
+          setAutoStartMessage({
+            type: 'success',
+            text: '¡Jornada iniciada automáticamente! Bienvenido.'
+          });
+          setTimeout(() => setAutoStartMessage(null), 4000);
+        }
+      }
+    } catch (err) {
+      console.error('Error starting auto session:', err);
+      setAutoStartMessage({
+        type: 'error',
+        text: 'No se pudo iniciar la sesión automáticamente'
+      });
+      setTimeout(() => setAutoStartMessage(null), 3000);
+    }
+  };
+
   const startSession = async () => {
     setIsLoading(true);
     try {
-      const token = window.localStorage.getItem('token');
+      const token = window.localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/registro/entrada/${user.idusuario}`, {
         method: 'POST',
         headers: {
@@ -66,10 +132,18 @@ const EmployeeSession = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setSession(data.sesion);
-        setCurrentTime(0);
-        setPausedTime(0);
-        setIsPaused(false);
+        
+        if (data.duplicado) {
+          setSession(data.sesion);
+          const start = new Date(data.sesion.inicio).getTime();
+          const elapsed = Math.floor((Date.now() - start) / 1000);
+          setCurrentTime(elapsed);
+        } else {
+          setSession(data.sesion);
+          setCurrentTime(0);
+          setPausedTime(0);
+          setIsPaused(false);
+        }
       }
     } catch (err) {
       console.error('Error starting session:', err);
@@ -90,7 +164,7 @@ const EmployeeSession = () => {
 
     setIsLoading(true);
     try {
-      const token = window.localStorage.getItem('token');
+      const token = window.localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/registro/salida/${user.idusuario}`, {
         method: 'POST',
         headers: {
@@ -100,10 +174,13 @@ const EmployeeSession = () => {
       });
 
       if (response.ok) {
+        const data = await response.json();
         setSession(null);
         setCurrentTime(0);
         setPausedTime(0);
         setIsPaused(false);
+        
+        alert(`Sesión finalizada. Trabajaste: ${data.duracion?.formato || 'N/A'}`);
       }
     } catch (err) {
       console.error('Error ending session:', err);
@@ -113,9 +190,9 @@ const EmployeeSession = () => {
   };
 
   const logout = () => {
-    window.localStorage.removeItem('token');
+    window.localStorage.removeItem('access_token');
     window.localStorage.removeItem('user');
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   const formatTime = (seconds) => {
@@ -167,6 +244,19 @@ const EmployeeSession = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
+          {autoStartMessage && (
+            <div className={`mb-6 p-4 rounded-lg flex items-center space-x-3 animate-fadeIn ${
+              autoStartMessage.type === 'success'
+                ? 'bg-[#34D399]/10 border border-[#34D399]/40 text-[#34D399]'
+                : autoStartMessage.type === 'error'
+                ? 'bg-[#F87171]/10 border border-[#F87171]/40 text-[#F87171]'
+                : 'bg-[#3B82F6]/10 border border-[#3B82F6]/40 text-[#3B82F6]'
+            }`}>
+              <CheckCircle size={24} />
+              <span>{autoStartMessage.text}</span>
+            </div>
+          )}
+
           <div className="bg-[#1F2937] rounded-xl shadow-xl border border-[#374151] overflow-hidden">
             <div className="bg-gradient-to-r from-[#3B82F6] to-[#2563EB] p-6 text-white">
               <div className="flex items-center space-x-4">
@@ -187,7 +277,7 @@ const EmployeeSession = () => {
                 <div className="text-center py-12">
                   <Clock className="mx-auto text-[#9CA3AF] mb-6" size={64} />
                   <h3 className="text-xl font-semibold mb-4">No hay sesión activa</h3>
-                  <p className="text-[#9CA3AF] mb-8">Inicia tu jornada laboral</p>
+                  <p className="text-[#9CA3AF] mb-8">Inicia tu jornada laboral manualmente</p>
                   <button
                     onClick={startSession}
                     disabled={isLoading}
@@ -196,6 +286,9 @@ const EmployeeSession = () => {
                     <Play size={24} />
                     <span>{isLoading ? 'Iniciando...' : 'Iniciar Jornada'}</span>
                   </button>
+                  <p className="text-xs text-[#6B7280] mt-4">
+                    * La sesión se inicia automáticamente al hacer login con QR
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-6">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from '../components/common/Navbar';
 import { userAPI, sessionAPI } from '../api/endpoints';
-import { Clock, Calendar, TrendingUp, Download, Filter, Search, RefreshCw } from 'lucide-react';
+import { Clock, Calendar, TrendingUp, Download, Filter, Search, RefreshCw, User } from 'lucide-react';
 
 const Gestion = () => {
   const [users, setUsers] = useState([]);
@@ -21,34 +21,27 @@ const Gestion = () => {
     setError(null);
     
     try {
-      console.log('🔄 Cargando usuarios...');
       const allUsers = await userAPI.getAllUsers();
-      console.log('✅ Usuarios cargados:', allUsers.length);
       setUsers(allUsers);
 
       const sessionsData = {};
       
       for (const user of allUsers) {
         try {
-          console.log(`📊 Cargando sesiones para ${user.nombre} (ID: ${user.idusuario})`);
           const userSessions = await sessionAPI.getUserSessions(user.idusuario);
-          console.log(`✅ Sesiones de ${user.nombre}:`, userSessions);
-          
-          // Asegurarnos de que userSessions sea un array
           const sessionsArray = Array.isArray(userSessions) ? userSessions : [];
           const filteredSessions = filterSessionsByPeriod(sessionsArray);
           sessionsData[user.idusuario] = filteredSessions;
         } catch (err) {
-          console.error(`❌ Error loading sessions for user ${user.idusuario}:`, err);
+          console.error(`Error loading sessions for user ${user.idusuario}:`, err);
           sessionsData[user.idusuario] = [];
         }
       }
 
       setSessions(sessionsData);
       setLastUpdate(new Date());
-      console.log('✅ Datos cargados completamente');
     } catch (error) {
-      console.error('❌ Error loading data:', error);
+      console.error('Error loading data:', error);
       setError('Error al cargar los datos. Por favor intenta nuevamente.');
     } finally {
       setIsLoading(false);
@@ -146,7 +139,7 @@ const Gestion = () => {
     const rows = filteredUsers.map(user => {
       const userSessions = sessions[user.idusuario] || [];
       const totalHours = calculateTotalHours(userSessions);
-      return `${user.nombre},${user.usuario},${totalHours.toFixed(2)},${userSessions.length},${filterPeriod}`;
+      return `${user.nombre},${user.username},${totalHours.toFixed(2)},${userSessions.length},${filterPeriod}`;
     });
     
     const csv = [headers, ...rows].join('\n');
@@ -173,7 +166,7 @@ const Gestion = () => {
     : 0;
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#111827] text-[#F9FAFB]">
       <Navbar />
       
       <div className="container mx-auto px-4 py-8">
@@ -181,10 +174,10 @@ const Gestion = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              <h1 className="text-3xl font-bold mb-2">
                 Gestión de Tiempos
               </h1>
-              <p className="text-gray-600">
+              <p className="text-[#9CA3AF]">
                 Visualiza y analiza los tiempos laborados · Última actualización: {lastUpdate.toLocaleTimeString('es-CO')}
               </p>
             </div>
@@ -192,7 +185,11 @@ const Gestion = () => {
             <button
               onClick={loadData}
               disabled={isLoading}
-              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 shadow-md"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition shadow-md ${
+                isLoading 
+                  ? 'bg-[#374151] cursor-not-allowed text-[#9CA3AF]' 
+                  : 'bg-[#3B82F6] hover:bg-[#2563EB] text-white'
+              }`}
             >
               <RefreshCw className={isLoading ? 'animate-spin' : ''} size={20} />
               <span>{isLoading ? 'Actualizando...' : 'Actualizar'}</span>
@@ -201,39 +198,39 @@ const Gestion = () => {
 
           {/* Statistics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-[#1F2937] p-6 rounded-lg shadow-md border border-[#374151]">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Horas</p>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-sm text-[#9CA3AF] mb-1">Total Horas</p>
+                  <p className="text-2xl font-bold">
                     {formatHours(totalHoursAllUsers)}
                   </p>
                 </div>
-                <Clock className="text-blue-600" size={32} />
+                <Clock className="text-[#3B82F6]" size={32} />
               </div>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-[#1F2937] p-6 rounded-lg shadow-md border border-[#374151]">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Promedio por Usuario</p>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-sm text-[#9CA3AF] mb-1">Promedio por Usuario</p>
+                  <p className="text-2xl font-bold">
                     {formatHours(averageHoursPerUser)}
                   </p>
                 </div>
-                <TrendingUp className="text-green-600" size={32} />
+                <TrendingUp className="text-[#34D399]" size={32} />
               </div>
             </div>
             
-            <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="bg-[#1F2937] p-6 rounded-lg shadow-md border border-[#374151]">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Empleados Activos</p>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-sm text-[#9CA3AF] mb-1">Empleados Activos</p>
+                  <p className="text-2xl font-bold">
                     {filteredUsers.length}
                   </p>
                 </div>
-                <Calendar className="text-purple-600" size={32} />
+                <Calendar className="text-[#A78BFA]" size={32} />
               </div>
             </div>
           </div>
@@ -241,14 +238,14 @@ const Gestion = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+          <div className="bg-[#F87171]/10 border border-[#F87171]/40 text-[#F87171] px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
             <div className="flex items-center">
               <Clock className="mr-2" size={20} />
               <span>{error}</span>
             </div>
             <button
               onClick={loadData}
-              className="text-red-700 hover:text-red-900 font-medium"
+              className="text-[#F87171] hover:text-[#dc2626] font-medium"
             >
               Reintentar
             </button>
@@ -256,25 +253,25 @@ const Gestion = () => {
         )}
 
         {/* Filters and Actions */}
-        <div className="bg-white rounded-lg shadow-md p-4 mb-6">
+        <div className="bg-[#1F2937] rounded-lg shadow-md p-4 mb-6 border border-[#374151]">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#9CA3AF]" size={20} />
               <input
                 type="text"
                 placeholder="Buscar empleado..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-[#111827] border border-[#374151] rounded-lg text-[#F9FAFB] placeholder-[#6B7280] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
               />
             </div>
 
             <div className="flex items-center space-x-3">
-              <Filter size={20} className="text-gray-600" />
+              <Filter size={20} className="text-[#9CA3AF]" />
               <select
                 value={filterPeriod}
                 onChange={(e) => setFilterPeriod(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="px-4 py-2 bg-[#111827] border border-[#374151] rounded-lg text-[#F9FAFB] focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent"
               >
                 <option value="today">Hoy</option>
                 <option value="week">Última semana</option>
@@ -284,7 +281,7 @@ const Gestion = () => {
 
               <button
                 onClick={exportToCSV}
-                className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                className="flex items-center space-x-2 bg-[#34D399] text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
               >
                 <Download size={20} />
                 <span>Exportar</span>
@@ -296,14 +293,14 @@ const Gestion = () => {
         {/* Users List */}
         <div className="space-y-4">
           {isLoading ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <RefreshCw className="animate-spin mx-auto text-blue-600 mb-4" size={48} />
-              <p className="text-gray-600">Cargando datos...</p>
+            <div className="bg-[#1F2937] rounded-lg shadow-md p-8 text-center border border-[#374151]">
+              <RefreshCw className="animate-spin mx-auto text-[#3B82F6] mb-4" size={48} />
+              <p className="text-[#9CA3AF]">Cargando datos...</p>
             </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <Clock className="mx-auto text-gray-400 mb-4" size={48} />
-              <p className="text-gray-600">No se encontraron empleados</p>
+            <div className="bg-[#1F2937] rounded-lg shadow-md p-8 text-center border border-[#374151]">
+              <User className="mx-auto text-[#9CA3AF] mb-4" size={48} />
+              <p className="text-[#9CA3AF]">No se encontraron empleados</p>
             </div>
           ) : (
             filteredUsers.map((user) => {
@@ -312,28 +309,28 @@ const Gestion = () => {
               const completedSessions = userSessions.filter(s => s.estado === 'finalizada');
 
               return (
-                <div key={user.idusuario} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div key={user.idusuario} className="bg-[#1F2937] rounded-lg shadow-md overflow-hidden border border-[#374151]">
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-bold text-lg">
+                        <div className="w-12 h-12 bg-[#3B82F6]/20 rounded-full flex items-center justify-center">
+                          <span className="text-[#3B82F6] font-bold text-lg">
                             {user.nombre.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-800">
+                          <h3 className="text-lg font-semibold">
                             {user.nombre}
                           </h3>
-                          <p className="text-sm text-gray-500">@{user.username} · {user.cargo || 'Sin cargo'}</p>
+                          <p className="text-sm text-[#9CA3AF]">@{user.username} · {user.cargo || 'Sin cargo'}</p>
                         </div>
                       </div>
                       
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-600">
+                        <p className="text-2xl font-bold text-[#3B82F6]">
                           {formatHours(totalHours)}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-[#9CA3AF]">
                           {completedSessions.length} sesiones
                         </p>
                       </div>
@@ -341,29 +338,29 @@ const Gestion = () => {
 
                     {/* Sessions Detail */}
                     {completedSessions.length > 0 && (
-                      <div className="mt-4 border-t pt-4">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">
+                      <div className="mt-4 border-t border-[#374151] pt-4">
+                        <h4 className="text-sm font-medium text-[#D1D5DB] mb-3">
                           Historial de Sesiones
                         </h4>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
-                          {completedSessions.map((session) => (
+                          {completedSessions.map((session, idx) => (
                             <div
-                              key={session.idsesion}
-                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                              key={session.idsesion || idx}
+                              className="flex items-center justify-between p-3 bg-[#111827] rounded-lg border border-[#374151]"
                             >
                               <div className="flex items-center space-x-3">
-                                <Calendar size={16} className="text-gray-400" />
+                                <Calendar size={16} className="text-[#9CA3AF]" />
                                 <div>
-                                  <p className="text-sm font-medium text-gray-800">
+                                  <p className="text-sm font-medium">
                                     {formatDate(session.inicio)}
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className="text-xs text-[#9CA3AF]">
                                     {formatTime(session.inicio)} - {session.fin ? formatTime(session.fin) : 'En curso'}
                                   </p>
                                 </div>
                               </div>
                               <div className="text-right">
-                                <p className="text-sm font-semibold text-gray-800">
+                                <p className="text-sm font-semibold">
                                   {session.duracion || 'N/A'}
                                 </p>
                               </div>
@@ -374,8 +371,8 @@ const Gestion = () => {
                     )}
 
                     {completedSessions.length === 0 && (
-                      <div className="mt-4 text-center py-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm text-gray-500">
+                      <div className="mt-4 text-center py-4 bg-[#111827] rounded-lg border border-[#374151]">
+                        <p className="text-sm text-[#9CA3AF]">
                           No hay sesiones en este periodo
                         </p>
                       </div>

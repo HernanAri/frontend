@@ -4,7 +4,7 @@ import ProtectedRoute from './Components/common/ProtectedRoute';
 import Login from './Pages/Login';
 import QRReader from './Pages/QRReader';
 import Dashboard from './Pages/Dashboard';
-import Admin from './Pages/admin';
+import Admin from './Pages/Admin';
 import Gestion from './Pages/Gestion';
 import EmployeeSession from './Pages/sesionEmpleados';
 import VehiculoRegistro from './Pages/RegistroVehiculo';
@@ -74,7 +74,7 @@ function App() {
           <Route
             path="/registro-vehiculo"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'gerente', 'empleado']}>
+              <ProtectedRoute allowedRoles={['admin', 'gerente', 'empleado', 'vigilante']}>
                 <VehiculoRegistro />
               </ProtectedRoute>
             }
@@ -83,7 +83,7 @@ function App() {
           <Route
             path="/lista-vehiculos"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'gerente', 'empleado']}>
+              <ProtectedRoute allowedRoles={['admin', 'gerente', 'empleado', 'vigilante']}>
                 <VehiculosLista />
               </ProtectedRoute>
             }

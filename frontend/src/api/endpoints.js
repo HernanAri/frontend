@@ -90,7 +90,6 @@ export const userAPI = {
     return data;
   },
   
-  // Eliminar un usuario
   deleteUser: async (idusuario) => {
     const { data } = await axiosInstance.delete(`/usuario/${idusuario}`);
     return data;

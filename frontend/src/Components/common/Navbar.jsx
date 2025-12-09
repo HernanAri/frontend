@@ -52,10 +52,6 @@ const Navbar = () => {
 
           {/* LINKS (Versión Escritorio) */}
           <div className="hidden md:flex items-center space-x-2">
-            <Link to="/qr-reader" className={linkClass('/qr-reader')}>
-              <QrCode size={18} />
-              <span>Lector QR</span>
-            </Link>
 
             {(user?.rol === 'admin' || user?.rol === 'gerente') && (
               <>

@@ -1,15 +1,15 @@
+// frontend/src/api/axios.config.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000';
-
+// Usar variable de entorno para la URL base del API
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor para agregar token
+// Interceptor para agregar el token en cada petición
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
@@ -18,10 +18,12 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// Interceptor para manejar errores
+// Interceptor para manejar errores de autenticación
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {

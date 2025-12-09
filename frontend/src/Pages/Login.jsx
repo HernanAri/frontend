@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { LogIn, QrCode, User, AlertCircle, Camera, CameraOff } from 'lucide-react';
+import { authAPI, qrAPI, sessionAPI } from '../api/endpoints';
 
 const Login = () => {
   const [loginMode, setLoginMode] = useState('form');
@@ -35,15 +36,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3000/autenticador/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      if (!response.ok) throw new Error('Credenciales inválidas');
-
-      const data = await response.json();
+      const data = await authAPI.login(username, password);
       
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
@@ -52,7 +45,7 @@ const Login = () => {
       redirectByRole(rol);
 
     } catch (err) {
-      setError(err.message || 'Credenciales inválidas');
+      setError(err.response?.data?.message || 'Credenciales inválidas');
       setIsLoading(false);
     }
   };
@@ -88,12 +81,17 @@ const Login = () => {
   };
 
   const stopQRScanner = async () => {
-    if (html5QrCodeRef.current?.isScanning) {
+    if (html5QrCodeRef.current) {
       try {
-        await html5QrCodeRef.current.stop();
+        const state = await html5QrCodeRef.current.getState();
+        
+        if (state === 2) {
+          await html5QrCodeRef.current.stop();
+        }
+        
         await html5QrCodeRef.current.clear();
       } catch (err) {
-        console.warn('Scanner ya detenido');
+        console.warn('Error al detener scanner:', err);
       }
     }
   };
@@ -102,29 +100,18 @@ const Login = () => {
     setIsLoading(true);
     setError('');
 
+    await stopQRScanner();
+    setIsScanning(false);
+
     try {
-      const loginResponse = await fetch('http://localhost:3000/qrcode/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      });
-
-      if (!loginResponse.ok) throw new Error('QR inválido o expirado');
-
-      const loginData = await loginResponse.json();
+      const loginData = await qrAPI.loginWithQR(token);
       
       localStorage.setItem('access_token', loginData.access_token);
       localStorage.setItem('user', JSON.stringify(loginData.user));
 
       if (loginData.user.rol.toLowerCase() === 'usuario') {
         try {
-          await fetch(`http://localhost:3000/registro/entrada/${loginData.user.idusuario}`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${loginData.access_token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+          await sessionAPI.startSessionById(loginData.user.idusuario);
         } catch (sessionErr) {
           console.error('Error al iniciar sesión automática:', sessionErr);
         }
@@ -134,9 +121,8 @@ const Login = () => {
       redirectByRole(rol);
 
     } catch (err) {
-      setError(err.message || 'Error al procesar el QR');
+      setError(err.response?.data?.message || 'QR inválido o expirado');
       setIsLoading(false);
-      setIsScanning(false);
     }
   };
 
@@ -147,8 +133,13 @@ const Login = () => {
     else window.location.href = '/sesion-empleados';
   };
 
-  const toggleScanner = () => {
-    setIsScanning(!isScanning);
+  const toggleScanner = async () => {
+    if (isScanning) {
+      await stopQRScanner();
+      setIsScanning(false);
+    } else {
+      setIsScanning(true);
+    }
     setError('');
   };
 
@@ -166,10 +157,11 @@ const Login = () => {
 
         <div className="flex gap-2 mb-6">
           <button
-            onClick={() => {
+            onClick={async () => {
+              await stopQRScanner();
+              setIsScanning(false);
               setLoginMode('form');
               setError('');
-              stopQRScanner();
             }}
             className={`flex-1 py-2 rounded-lg font-medium flex items-center justify-center gap-2 ${
               loginMode === 'form' ? 'bg-[#3B82F6] text-white' : 'bg-[#374151] text-[#9CA3AF]'

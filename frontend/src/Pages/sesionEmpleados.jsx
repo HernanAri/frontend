@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Play, Pause, StopCircle, LogOut, Calendar, CheckCircle } from 'lucide-react';
+import { Clock, Play, Pause, StopCircle, LogOut, Calendar, CheckCircle, RefreshCw } from 'lucide-react';
 
 const EmployeeSession = () => {
   const [user, setUser] = useState(null);
@@ -14,7 +14,6 @@ const EmployeeSession = () => {
     const userData = JSON.parse(window.localStorage.getItem('user') || '{}');
     setUser(userData);
     
-    // Intentar iniciar sesión automáticamente si no hay una activa
     const autoStartSession = async () => {
       if (userData.idusuario) {
         await loadActiveSession(userData.idusuario, true);
@@ -39,7 +38,7 @@ const EmployeeSession = () => {
 
   const loadActiveSession = async (userId, autoStart = false) => {
     try {
-      const token = window.localStorage.getItem('access_token');
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/registro/usuario/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -51,7 +50,6 @@ const EmployeeSession = () => {
         const active = sessions.find(s => s.estado === 'activa');
         
         if (active) {
-          // Ya hay sesión activa
           setSession(active);
           const start = new Date(active.inicio).getTime();
           const elapsed = Math.floor((Date.now() - start) / 1000);
@@ -65,7 +63,6 @@ const EmployeeSession = () => {
             setTimeout(() => setAutoStartMessage(null), 3000);
           }
         } else if (autoStart) {
-          // No hay sesión activa, iniciar automáticamente
           await startSessionAuto(userId);
         }
       }
@@ -76,7 +73,7 @@ const EmployeeSession = () => {
 
   const startSessionAuto = async (userId) => {
     try {
-      const token = window.localStorage.getItem('access_token');
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/registro/entrada/${userId}`, {
         method: 'POST',
         headers: {
@@ -89,13 +86,11 @@ const EmployeeSession = () => {
         const data = await response.json();
         
         if (data.duplicado) {
-          // La sesión ya existía
           setSession(data.sesion);
           const start = new Date(data.sesion.inicio).getTime();
           const elapsed = Math.floor((Date.now() - start) / 1000);
           setCurrentTime(elapsed);
         } else {
-          // Nueva sesión creada
           setSession(data.sesion);
           setCurrentTime(0);
           setPausedTime(0);
@@ -121,7 +116,7 @@ const EmployeeSession = () => {
   const startSession = async () => {
     setIsLoading(true);
     try {
-      const token = window.localStorage.getItem('access_token');
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/registro/entrada/${user.idusuario}`, {
         method: 'POST',
         headers: {
@@ -164,7 +159,7 @@ const EmployeeSession = () => {
 
     setIsLoading(true);
     try {
-      const token = window.localStorage.getItem('access_token');
+      const token = localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/registro/salida/${user.idusuario}`, {
         method: 'POST',
         headers: {
@@ -175,15 +170,23 @@ const EmployeeSession = () => {
 
       if (response.ok) {
         const data = await response.json();
+        
+        // Detener la sesión inmediatamente
         setSession(null);
         setCurrentTime(0);
         setPausedTime(0);
         setIsPaused(false);
-        
-        alert(`Sesión finalizada. Trabajaste: ${data.duracion?.formato || 'N/A'}`);
+      } else {
+        // Si hay error en la respuesta
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al finalizar sesión');
       }
     } catch (err) {
       console.error('Error ending session:', err);
+      alert(`Error al finalizar la sesión: ${err.message}`);
+      
+      // Recargar la sesión para verificar el estado real
+      await loadActiveSession(user.idusuario, false);
     } finally {
       setIsLoading(false);
     }
@@ -244,6 +247,15 @@ const EmployeeSession = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
+          {/* Botón de diagnóstico temporal */}
+          <button
+            onClick={() => loadActiveSession(user.idusuario, false)}
+            className="mb-4 flex items-center space-x-2 px-4 py-2 bg-[#374151] text-[#9CA3AF] rounded-lg hover:bg-[#4B5563] transition text-sm"
+          >
+            <RefreshCw size={16} />
+            <span>Verificar estado real de sesión</span>
+          </button>
+
           {autoStartMessage && (
             <div className={`mb-6 p-4 rounded-lg flex items-center space-x-3 animate-fadeIn ${
               autoStartMessage.type === 'success'

@@ -38,7 +38,7 @@ const Navbar = () => {
               <img src="logo3.png" alt="CLOKIFY" />
             </div>
             <h1 className="text-xl font-script italic tracking-tight text-[#F9FAFB]">
-              CLOKIFY
+              CLOCKIFY
             </h1>
           </div>
 

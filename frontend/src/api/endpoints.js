@@ -11,8 +11,20 @@ export const authAPI = {
 };
 
 export const qrAPI = {
+  // ✅ AGREGADO: Login con QR
+  login: async (token) => {
+    const { data } = await axiosInstance.post('/qrcode/login', { token });
+    return data;
+  },
+  
   verifyToken: async (token) => {
     const { data } = await axiosInstance.post('/qrcode/verify', { token });
+    return data;
+  },
+  
+  // ✅ AGREGADO: Obtener info del usuario desde QR
+  getUserInfo: async (token) => {
+    const { data } = await axiosInstance.post('/qrcode/info', { token });
     return data;
   },
 };
@@ -37,6 +49,12 @@ export const sessionAPI = {
     const { data } = await axiosInstance.get(`/registro/resumen/${idusuario}`);
     return data;
   },
+  
+  // ✅ AGREGADO: Iniciar sesión por ID de usuario
+  startSessionById: async (idusuario) => {
+    const { data } = await axiosInstance.post('/registro/entrada-directa', { idusuario });
+    return data;
+  },
 };
 
 export const userAPI = {
@@ -55,7 +73,7 @@ export const userAPI = {
   // Crear un nuevo usuario
   createUser: async (userData) => {
     const { data } = await axiosInstance.post('/usuario', {
-      idusuario: userData.idusuario || Date.now(), // Genera ID si no existe
+      idusuario: userData.idusuario || Date.now(),
       nombre: userData.nombre,
       documento: userData.documento,
       cargo: userData.cargo || 'Empleado',

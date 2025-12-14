@@ -104,7 +104,7 @@ const Login = () => {
     setIsScanning(false);
 
     try {
-      const loginData = await qrAPI.loginWithQR(token);
+      const loginData = await qrAPI.login(token);
       
       localStorage.setItem('access_token', loginData.access_token);
       localStorage.setItem('user', JSON.stringify(loginData.user));
@@ -151,7 +151,7 @@ const Login = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-[#374151] rounded-full mb-4">
             <LogIn className="text-[#3B82F6]" size={32} />
           </div>
-          <h1 className="text-3xl font-bold text-[#F9FAFB]">CLOKIFY</h1>
+          <h1 className="text-3xl font-bold text-[#F9FAFB]">CLOCKIFY</h1>
           <p className="text-[#9CA3AF] mt-2">Sistema de Asistencia</p>
         </div>
 

@@ -104,23 +104,45 @@ const Login = () => {
     setIsScanning(false);
 
     try {
+      // 1. Login con QR (obtiene access_token)
       const loginData = await qrAPI.login(token);
       
       localStorage.setItem('access_token', loginData.access_token);
       localStorage.setItem('user', JSON.stringify(loginData.user));
 
+      // 2. Si es usuario (empleado), iniciar sesión laboral automáticamente
       if (loginData.user.rol.toLowerCase() === 'usuario') {
         try {
-          await sessionAPI.startSessionById(loginData.user.idusuario);
+          const token = localStorage.getItem('access_token');
+          const response = await fetch(
+            `http://localhost:3000/registro/entrada/${loginData.user.idusuario}`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          if (response.ok) {
+            const sessionData = await response.json();
+            console.log('Sesión laboral iniciada:', sessionData);
+          } else {
+            console.warn('No se pudo iniciar sesión laboral automáticamente');
+          }
         } catch (sessionErr) {
-          console.error('Error al iniciar sesión automática:', sessionErr);
+          console.error('Error al iniciar sesión laboral:', sessionErr);
+          // No bloqueamos el login por este error
         }
       }
 
+      // 3. Redireccionar según rol
       const rol = loginData.user.rol.toLowerCase();
       redirectByRole(rol);
 
     } catch (err) {
+      console.error('Error en QR login:', err);
       setError(err.response?.data?.message || 'QR inválido o expirado');
       setIsLoading(false);
     }
@@ -242,9 +264,10 @@ const Login = () => {
               {!isScanning && (
                 <div className="flex flex-col items-center justify-center h-[300px] text-[#9CA3AF]">
                   <QrCode size={64} className="mb-4" />
-                  <p className="text-center px-4">Escanea tu código QR personal</p>
-                  <p className="text-xs text-center px-4 mt-2">
-                    Los empleados iniciarán su jornada automáticamente
+                  <p className="text-center px-4 font-medium">Escanea tu código QR personal</p>
+                  <p className="text-xs text-center px-4 mt-3 text-[#6B7280]">
+                    ✓ Login automático<br/>
+                    ✓ Inicio de jornada laboral
                   </p>
                 </div>
               )}
@@ -267,12 +290,12 @@ const Login = () => {
               ) : isScanning ? (
                 <>
                   <CameraOff size={20} />
-                  <span>Detener</span>
+                  <span>Detener Escaneo</span>
                 </>
               ) : (
                 <>
                   <Camera size={20} />
-                  <span>Escanear QR</span>
+                  <span>Iniciar Escaneo</span>
                 </>
               )}
             </button>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Play, Pause, StopCircle, LogOut, Calendar, CheckCircle, RefreshCw } from 'lucide-react';
+import { Clock, Play, Pause, StopCircle, LogOut, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
 
 const EmployeeSession = () => {
   const [user, setUser] = useState(null);
@@ -8,19 +8,15 @@ const EmployeeSession = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [pausedTime, setPausedTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [autoStartMessage, setAutoStartMessage] = useState(null);
+  const [statusMessage, setStatusMessage] = useState(null);
 
   useEffect(() => {
     const userData = JSON.parse(window.localStorage.getItem('user') || '{}');
     setUser(userData);
     
-    const autoStartSession = async () => {
-      if (userData.idusuario) {
-        await loadActiveSession(userData.idusuario, true);
-      }
-    };
-    
-    autoStartSession();
+    if (userData.idusuario) {
+      loadActiveSession(userData.idusuario);
+    }
   }, []);
 
   useEffect(() => {
@@ -36,13 +32,16 @@ const EmployeeSession = () => {
     return () => clearInterval(interval);
   }, [session, isPaused, pausedTime]);
 
-  const loadActiveSession = async (userId, autoStart = false) => {
+  const showMessage = (type, text, duration = 4000) => {
+    setStatusMessage({ type, text });
+    setTimeout(() => setStatusMessage(null), duration);
+  };
+
+  const loadActiveSession = async (userId) => {
     try {
       const token = localStorage.getItem('access_token');
       const response = await fetch(`http://localhost:3000/registro/usuario/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       
       if (response.ok) {
@@ -54,62 +53,11 @@ const EmployeeSession = () => {
           const start = new Date(active.inicio).getTime();
           const elapsed = Math.floor((Date.now() - start) / 1000);
           setCurrentTime(elapsed);
-          
-          if (autoStart) {
-            setAutoStartMessage({
-              type: 'info',
-              text: 'Tu sesión ya estaba activa. Continuando...'
-            });
-            setTimeout(() => setAutoStartMessage(null), 3000);
-          }
-        } else if (autoStart) {
-          await startSessionAuto(userId);
+          showMessage('info', 'Sesión activa encontrada. Continuando...', 3000);
         }
       }
     } catch (err) {
       console.error('Error loading session:', err);
-    }
-  };
-
-  const startSessionAuto = async (userId) => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:3000/registro/entrada/${userId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.duplicado) {
-          setSession(data.sesion);
-          const start = new Date(data.sesion.inicio).getTime();
-          const elapsed = Math.floor((Date.now() - start) / 1000);
-          setCurrentTime(elapsed);
-        } else {
-          setSession(data.sesion);
-          setCurrentTime(0);
-          setPausedTime(0);
-          setIsPaused(false);
-          
-          setAutoStartMessage({
-            type: 'success',
-            text: '¡Jornada iniciada automáticamente! Bienvenido.'
-          });
-          setTimeout(() => setAutoStartMessage(null), 4000);
-        }
-      }
-    } catch (err) {
-      console.error('Error starting auto session:', err);
-      setAutoStartMessage({
-        type: 'error',
-        text: 'No se pudo iniciar la sesión automáticamente'
-      });
-      setTimeout(() => setAutoStartMessage(null), 3000);
     }
   };
 
@@ -133,15 +81,18 @@ const EmployeeSession = () => {
           const start = new Date(data.sesion.inicio).getTime();
           const elapsed = Math.floor((Date.now() - start) / 1000);
           setCurrentTime(elapsed);
+          showMessage('info', 'Ya tienes una sesión activa');
         } else {
           setSession(data.sesion);
           setCurrentTime(0);
           setPausedTime(0);
           setIsPaused(false);
+          showMessage('success', '¡Jornada iniciada exitosamente!');
         }
       }
     } catch (err) {
       console.error('Error starting session:', err);
+      showMessage('error', 'Error al iniciar la sesión');
     } finally {
       setIsLoading(false);
     }
@@ -152,6 +103,7 @@ const EmployeeSession = () => {
       setPausedTime(prev => prev + (Date.now() - new Date(session.inicio).getTime() - currentTime * 1000));
     }
     setIsPaused(!isPaused);
+    showMessage('info', isPaused ? 'Sesión reanudada' : 'Sesión pausada', 2000);
   };
 
   const endSession = async () => {
@@ -171,28 +123,31 @@ const EmployeeSession = () => {
       if (response.ok) {
         const data = await response.json();
         
-        // Detener la sesión inmediatamente
         setSession(null);
         setCurrentTime(0);
         setPausedTime(0);
         setIsPaused(false);
+        
+        showMessage('success', `Jornada finalizada. Trabajaste ${data.duracion?.formato || 'tiempo calculado'}`, 5000);
       } else {
-        // Si hay error en la respuesta
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Error al finalizar sesión');
       }
     } catch (err) {
       console.error('Error ending session:', err);
-      alert(`Error al finalizar la sesión: ${err.message}`);
-      
-      // Recargar la sesión para verificar el estado real
-      await loadActiveSession(user.idusuario, false);
+      showMessage('error', `Error: ${err.message}`);
+      await loadActiveSession(user.idusuario);
     } finally {
       setIsLoading(false);
     }
   };
 
   const logout = () => {
+    if (session) {
+      if (!window.confirm('Tienes una sesión activa. ¿Seguro que quieres cerrar sesión?')) {
+        return;
+      }
+    }
     window.localStorage.removeItem('access_token');
     window.localStorage.removeItem('user');
     window.location.href = '/login';
@@ -233,7 +188,7 @@ const EmployeeSession = () => {
             <div className="w-10 h-10 bg-[#3B82F6] rounded-lg flex items-center justify-center">
               <Clock size={24} />
             </div>
-            <h1 className="text-xl font-bold">CLOKIFY</h1>
+            <h1 className="text-xl font-bold">CLOCKIFY</h1>
           </div>
           <button
             onClick={logout}
@@ -247,25 +202,19 @@ const EmployeeSession = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          {/* Botón de diagnóstico temporal */}
-          <button
-            onClick={() => loadActiveSession(user.idusuario, false)}
-            className="mb-4 flex items-center space-x-2 px-4 py-2 bg-[#374151] text-[#9CA3AF] rounded-lg hover:bg-[#4B5563] transition text-sm"
-          >
-            <RefreshCw size={16} />
-            <span>Verificar estado real de sesión</span>
-          </button>
-
-          {autoStartMessage && (
+          
+          {statusMessage && (
             <div className={`mb-6 p-4 rounded-lg flex items-center space-x-3 animate-fadeIn ${
-              autoStartMessage.type === 'success'
+              statusMessage.type === 'success'
                 ? 'bg-[#34D399]/10 border border-[#34D399]/40 text-[#34D399]'
-                : autoStartMessage.type === 'error'
+                : statusMessage.type === 'error'
                 ? 'bg-[#F87171]/10 border border-[#F87171]/40 text-[#F87171]'
                 : 'bg-[#3B82F6]/10 border border-[#3B82F6]/40 text-[#3B82F6]'
             }`}>
-              <CheckCircle size={24} />
-              <span>{autoStartMessage.text}</span>
+              {statusMessage.type === 'success' ? <CheckCircle size={24} /> : 
+               statusMessage.type === 'error' ? <AlertCircle size={24} /> :
+               <Clock size={24} />}
+              <span>{statusMessage.text}</span>
             </div>
           )}
 
@@ -289,7 +238,7 @@ const EmployeeSession = () => {
                 <div className="text-center py-12">
                   <Clock className="mx-auto text-[#9CA3AF] mb-6" size={64} />
                   <h3 className="text-xl font-semibold mb-4">No hay sesión activa</h3>
-                  <p className="text-[#9CA3AF] mb-8">Inicia tu jornada laboral manualmente</p>
+                  <p className="text-[#9CA3AF] mb-8">Inicia tu jornada laboral</p>
                   <button
                     onClick={startSession}
                     disabled={isLoading}
@@ -299,7 +248,7 @@ const EmployeeSession = () => {
                     <span>{isLoading ? 'Iniciando...' : 'Iniciar Jornada'}</span>
                   </button>
                   <p className="text-xs text-[#6B7280] mt-4">
-                    * La sesión se inicia automáticamente al hacer login con QR
+                    * También puedes iniciar sesión escaneando tu QR en el login
                   </p>
                 </div>
               ) : (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Navbar from '../components/common/Navbar';
+import Navbar from '../Components/common/Navbar';
 import EmployeeCard from  '../Components/dashboard/EmployeeCard';
 import RealTimeStats from '../Components/dashboard/RealTimeStats';
 import { userAPI, sessionAPI } from '../api/endpoints';

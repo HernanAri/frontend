@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './Components/common/ProtectedRoute';
 import Login from './Pages/Login';
-import QRReader from './Pages/QRReader';
 import Dashboard from './Pages/Dashboard';
 import Admin from './Pages/Admin';
 import Gestion from './Pages/Gestion';
@@ -17,16 +16,7 @@ function App() {
         <Routes>
           {/* Ruta pública */}
           <Route path="/login" element={<Login />} />
-          
-          {/* Ruta para lectura QR - Todos los usuarios autenticados */}
-          <Route
-            path="/qr-reader"
-            element={
-              <ProtectedRoute>
-                <QRReader />
-              </ProtectedRoute>
-            }
-          />
+        
           
           {/* Dashboard - Solo Admin y Gerente */}
           <Route

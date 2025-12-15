@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Car, TrendingUp, Calendar, Search, RefreshCw, CheckCircle, ArrowLeftRight } from 'lucide-react';
-import Navbar from '../components/common/Navbar';
+import Navbar from '../Components/common/Navbar';
 
 const VehiculosLista = () => {
   const [vehiculos, setVehiculos] = useState([]);

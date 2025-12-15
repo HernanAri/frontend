@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Navbar from '../components/common/Navbar';
+import Navbar from '../Components/common/Navbar';
 import { userAPI } from '../api/endpoints';
 import { UserPlus, Edit2, Trash2, Users, Clock, Search, CheckCircle, XCircle } from 'lucide-react';
 

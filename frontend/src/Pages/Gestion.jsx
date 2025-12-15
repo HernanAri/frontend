@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Navbar from '../components/common/Navbar';
+import Navbar from '../Components/common/Navbar';
 import { userAPI, sessionAPI } from '../api/endpoints';
 import { Clock, Calendar, TrendingUp, Download, Filter, Search, RefreshCw, User } from 'lucide-react';
 

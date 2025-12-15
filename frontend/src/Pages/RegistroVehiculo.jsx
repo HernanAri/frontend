@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Car, Search, CheckCircle, XCircle, RefreshCw, Edit2, Save } from 'lucide-react';
-import Navbar from '../components/common/Navbar';
+import Navbar from '../Components/common/Navbar';
 
 const VehiculoRegistro = () => {
   const [user, setUser] = useState(null);
